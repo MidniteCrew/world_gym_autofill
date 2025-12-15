@@ -22,7 +22,7 @@
     return formData || null;
   }
 
-  // ✅ Check agreements reliably (works for plain + React-controlled checkboxes)
+  // 1. Check agreements reliably (works for plain + React-controlled checkboxes)
   function clickAgreement(inputSelector) {
     const input = document.querySelector(inputSelector);
     if (!input) return false;
@@ -30,10 +30,10 @@
     // If it's disabled, we can't toggle it.
     if (input.disabled) return false;
 
-    // If already checked, we're done.
+    // If already checked then done.
     if (input.checked === true) return true;
 
-    // Prefer a real user-like click first (some apps only update state on click)
+    // user-like click
     try {
       input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }));
       input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -45,9 +45,6 @@
     }
 
     if (input.checked === true) return true;
-
-    // React-controlled checkbox fix:
-    // Use the native "checked" setter so frameworks see the property change.
     const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked');
     const nativeCheckedSetter = desc && typeof desc.set === 'function' ? desc.set : null;
 
@@ -57,11 +54,9 @@
       input.checked = true;
     }
 
-    // Fire events in the typical order frameworks listen to.
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
 
-    // Some sites listen on the label/container rather than the input
     const clickable = input.closest('label') || input.parentElement;
     if (clickable) {
       try {
@@ -71,7 +66,7 @@
       }
     }
 
-    // Final truth check
+    // final check
     return input.checked === true;
   }
 
@@ -115,7 +110,7 @@
       male?.dispatchEvent(new Event('change', { bubbles: true }));
       female?.dispatchEvent(new Event('change', { bubbles: true }));
 
-      // ---- Agreements (ROBUST FIX) ----
+      // ---- Agreements ----
       const agreementSelectors = [
         '#GuestServicesAgreement1',
         '#GuestServicesAgreement2',
@@ -149,10 +144,10 @@
     });
   }
 
-  // Initial run
+  // init run
   runAutofill();
 
-  // Re-run when popup data changes
+  // re-run when popup data changes
   browserApi.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.formData) {
       runAutofill();
