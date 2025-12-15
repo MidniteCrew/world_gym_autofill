@@ -7,3 +7,7 @@ This has been published on firefox.
 # User flow
 If you installed the extension on firefox then when you scan the QR code at the gym, it will open firefox
 and automatically fill the form.
+
+
+# Firefox extension
+The extension is called: "World Gym Guest - Autofill"
