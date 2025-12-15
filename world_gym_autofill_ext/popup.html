@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 260px;
+      padding: 8px;
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 0;
+      border-radius: 999px;
+      border: none;
+      background: #007AFF;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0066d6;
+    }
+
+    button:active {
+      background: #005bbf;
+    }
+  </style>
+</head>
+<body>
+  <h3>World Gym Guest Form - Autofill</h3>
+
+  <input id="email" placeholder="Email">
+  <input id="firstName" placeholder="First name">
+  <input id="lastName" placeholder="Last name">
+  <input id="year" placeholder="Year of birth">
+  
+  <select id="gender">
+    <option value="M">Man</option>
+    <option value="F">Woman</option>
+  </select>
+
+  <input id="street" placeholder="Street address">
+  <input id="city" placeholder="City">
+  <input id="state" placeholder="Province">
+  <input id="postal" placeholder="Postal code">
+  <input id="phone" placeholder="Phone (Format: 514-3333-9999)">
+  <select id="guestType" required>
+    <option value="" disabled selected>Select guest pass</option>
+    <option value="GVM">Guest of a VIP Member</option>
+    <option value="GPC">Free trial</option>
+    <option value="PD">Purchase a day access</option>
+  </select>
+  <input id="promo" placeholder="Promo code">
+
+  <button id="save">Save</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
