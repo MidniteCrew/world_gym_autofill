@@ -1,7 +1,7 @@
 (() => {
   const browserApi = typeof browser !== 'undefined'
-  ? browser
-  : chrome;
+    ? browser
+    : chrome;
 
   function waitFor(selector, callback) {
     const el = document.querySelector(selector);
@@ -22,6 +22,59 @@
     return formData || null;
   }
 
+  // ✅ Check agreements reliably (works for plain + React-controlled checkboxes)
+  function clickAgreement(inputSelector) {
+    const input = document.querySelector(inputSelector);
+    if (!input) return false;
+
+    // If it's disabled, we can't toggle it.
+    if (input.disabled) return false;
+
+    // If already checked, we're done.
+    if (input.checked === true) return true;
+
+    // Prefer a real user-like click first (some apps only update state on click)
+    try {
+      input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }));
+      input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'mouse' }));
+      input.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      input.click();
+    } catch (_) {
+      // ignore
+    }
+
+    if (input.checked === true) return true;
+
+    // React-controlled checkbox fix:
+    // Use the native "checked" setter so frameworks see the property change.
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked');
+    const nativeCheckedSetter = desc && typeof desc.set === 'function' ? desc.set : null;
+
+    if (nativeCheckedSetter) {
+      nativeCheckedSetter.call(input, true);
+    } else {
+      input.checked = true;
+    }
+
+    // Fire events in the typical order frameworks listen to.
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // Some sites listen on the label/container rather than the input
+    const clickable = input.closest('label') || input.parentElement;
+    if (clickable) {
+      try {
+        clickable.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    // Final truth check
+    return input.checked === true;
+  }
+
   function runAutofill() {
     waitFor('#Email', async () => {
       const formData = await getFormData();
@@ -29,6 +82,7 @@
 
       const $ = s => document.querySelector(s);
 
+      // ---- Text fields ----
       $('#Email').value = formData.email || '';
       $('#FirstName').value = formData.firstName || '';
       $('#LastName').value = formData.lastName || '';
@@ -40,12 +94,15 @@
       $('#PhoneMobile').value = formData.phone || '';
       $('#PromoCode').value = formData.promo || '';
 
+      // ---- Guest type ----
       const guestType = $('#GuestPassType');
       if (guestType && formData.guestType) {
         guestType.value = formData.guestType;
+        guestType.dispatchEvent(new Event('input', { bubbles: true }));
         guestType.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
+      // ---- Gender ----
       const male = $('#GenderM');
       const female = $('#GenderF');
 
@@ -58,11 +115,41 @@
       male?.dispatchEvent(new Event('change', { bubbles: true }));
       female?.dispatchEvent(new Event('change', { bubbles: true }));
 
+      // ---- Agreements (ROBUST FIX) ----
+      const agreementSelectors = [
+        '#GuestServicesAgreement1',
+        '#GuestServicesAgreement2',
+        '#GuestServicesAgreement3',
+        '#Agreement'
+      ];
+
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const interval = setInterval(() => {
+        attempts++;
+
+        const results = agreementSelectors.map(sel => {
+          const el = document.querySelector(sel);
+          return el ? clickAgreement(sel) : false;
+        });
+
+        const allChecked = results.every(Boolean);
+
+        if (allChecked || attempts >= maxAttempts) {
+          clearInterval(interval);
+          console.log(
+            '[WG - autofill]',
+            allChecked ? 'Agreements checked' : 'Agreements not fully clickable'
+          );
+        }
+      }, 250);
+
       console.log('[WG - autofill] Autofill applied');
     });
   }
 
-  // Run on page load
+  // Initial run
   runAutofill();
 
   // Re-run when popup data changes
